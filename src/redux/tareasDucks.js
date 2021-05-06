@@ -1,6 +1,6 @@
-//  constantes
 import shortid from "shortid";
 
+//  constantes
 const dataInicial = {
   tareas: [],
 };
