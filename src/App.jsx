@@ -1,59 +1,48 @@
 import React, { useState } from "react";
-import shortid from "shortid";
+
+import { useDispatch, useSelector } from "react-redux";
+import { agregarTarea, elimiarTarea, editarTarea } from "./redux/tareasDucks";
 
 function App() {
   const [tarea, setTarea] = useState("");
-  const [tareas, setTareas] = useState([]);
+  const [id, setId] = useState("");
   const [modoEdicion, setModoEdicion] = useState(false);
-  const [idTarea, setIdTarea] = useState("");
-  const [error, setError] = useState(null);
+  const [error, setError] = useState("");
 
-  const agregarTarea = (e) => {
+  const dispatch = useDispatch();
+  const tareas = useSelector((store) => store.tareas.tareas);
+
+  const add = (e) => {
     e.preventDefault();
-
-    if (!tarea.trim()) {
-      setError("Escriba algo por favor...");
-      return;
+    if (tarea.trim() === "") {
+      setError("Debe ingresar una tarea");
+    } else {
+      dispatch(agregarTarea(tarea));
+      setTarea("");
+      setError("");
     }
-
-    setTareas([
-      ...tareas,
-      {
-        id: shortid.generate(),
-        nombreTarea: tarea,
-      },
-    ]);
-    setTarea("");
-    setError(null);
   };
 
   const eliminarTarea = (id) => {
-    const arrayFiltrado = tareas.filter((item) => item.id !== id);
-    setTareas(arrayFiltrado);
+    dispatch(elimiarTarea(id));
   };
 
-  const modoEdicionTarea = (item) => {
+  const activeEditMode = (item) => {
     setModoEdicion(true);
-    setIdTarea(item.id);
-    setTarea(item.nombreTarea);
+    setId(item[1]);
+    setTarea(item[0]);
   };
 
-  const editarTarea = (e) => {
+  const edit = (e) => {
     e.preventDefault();
-    if (!tarea.trim()) {
-      setError("Escriba algo por favor...");
-      return;
+    if (tarea.trim() === "") {
+      setError("Debe ingresar una tarea");
+    } else {
+      dispatch(editarTarea(id, tarea));
+      setTarea("");
+      setModoEdicion(false);
+      setError("");
     }
-
-    const arrayEditado = tareas.map((item) =>
-      item.id === idTarea ? { id: idTarea, nombreTarea: tarea } : item
-    );
-
-    setTareas(arrayEditado);
-    setTarea("");
-    setModoEdicion(false);
-    setIdTarea("");
-    setError(null);
   };
 
   return (
@@ -72,18 +61,18 @@ function App() {
               </li>
             ) : (
               tareas.map((item) => (
-                <li key={item.id} className='list-group-item'>
-                  <span className='lead'>{item.nombreTarea}</span>
+                <li key={item[1]} className='list-group-item'>
+                  <span className='lead'>{item[0]}</span>
 
                   <button
                     className='btn btn-danger btn-sm float-end mx-2'
-                    onClick={() => eliminarTarea(item.id)}
+                    onClick={() => eliminarTarea(item[1])}
                   >
                     Eliminar
                   </button>
                   <button
                     className='btn btn-warning btn-sm float-end'
-                    onClick={() => modoEdicionTarea(item)}
+                    onClick={() => activeEditMode(item)}
                   >
                     Editar
                   </button>
@@ -98,8 +87,9 @@ function App() {
             {modoEdicion ? "Editar Tarea" : "Agregar Tarea"}
           </h4>
 
-          <form onSubmit={modoEdicion ? editarTarea : agregarTarea}>
-            {error ? <span className='text-danger'>{error}</span> : null}
+          {error ? <p>{error}</p> : null}
+
+          <form onSubmit={modoEdicion ? edit : add}>
             <input
               type='text'
               className='form-control mb-2'
